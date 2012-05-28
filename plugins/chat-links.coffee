@@ -1,20 +1,24 @@
 ###!PIM_PLUGIN
 { "name"    : "Chat Links"
-, "version" : "0.0.1"
+, "version" : "0.0.3"
 , "access"  : ["formatter","chatCollection"]
 }
 ###
 escapeHTML = formatter.escapeHTML
 
 chatLinks = (text, phase, meta) =>
-  return text.replace /\[chat ([0-9]+)\](?!\()/g, (str) =>
-    chatId = parseInt str.match(/\[chat ([0-9]+)\](?!\()/)[1]
+  regexp = /\[chat ([0-9]+)\](?!\()/g
+  while matches = regexp.exec text
+    chatId = parseInt matches[1]
     chat = chatCollection.get(chatId)
     if chat
       chatName = chat.get('topic')
     else
       chatName = "Chat #{chatId}"
-    return formatter.placeholder "<a href='/chat/#{chatId}'>#{escapeHTML chatName}</a>"
+    r = formatter.placeholder "<a href='/chat/#{chatId}'>#{escapeHTML chatName}</a>"
+    text = text.substr(0, matches.index) + r + text.substr(matches.index+matches[0].length)
+    matches.nextIndex = matches.index + r.length
+  return text
 
 plugin.load = ->
   formatter.add formatter.PHASE_PLAIN, 80, chatLinks
