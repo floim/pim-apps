@@ -1,6 +1,6 @@
 ###!PIM_PLUGIN
 { "name"    : "User Links"
-, "version" : "0.0.4"
+, "version" : "0.0.5"
 , "access"  : ["formatter","userCollection"]
 }
 ###
@@ -26,7 +26,7 @@ atUserLinks = (text, phase, meta) =>
     username = matches[1]
     users = userCollection.where(username:username)
     if users.length is 0
-      return str
+      continue
     userId = users[0].id
     r = formatter.placeholder "<a href='/user/#{userId}' class='username_#{userId}'>@#{escapeHTML username}</a>"
     text = text.substr(0, matches.index) + r + text.substr(matches.index + matches[0].length)
