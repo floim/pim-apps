@@ -1,7 +1,7 @@
 ###!PIM_PLUGIN
 { "name"    : "Chat Links"
-, "version" : "0.0.3"
-, "access"  : ["formatter","chatCollection"]
+, "version" : "0.0.4"
+, "access"  : ["plugin","formatter","chatCollection"]
 }
 ###
 escapeHTML = formatter.escapeHTML

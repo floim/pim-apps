@@ -3,14 +3,17 @@
 {
   "name": "Embed Tweet",
   "version": "0.0.6",
-  "access": ["formatter","jsonp"],
+  "access": ["plugin","formatter","jsonp"],
+  "jsonp_urls": {
+    "status":"https://api.twitter.com/1/statuses/show/{INT:TWEET_ID}.json?callback=?"
+  },
   "dependencies": [
     "//platform.twitter.com/widgets.js"
   ]
 }
 */
 
-var delay, embedTweet, escapeHTML, renderTweet,
+var delay, embedTweet, escapeHTML, fetchTweet, renderTweet,
   _this = this;
 
 delay = function(ms, cb) {
@@ -21,36 +24,28 @@ escapeHTML = formatter.escapeHTML;
 
 renderTweet = function(json) {
   var html;
-  return html = "<blockquote class=\"twitter-tweet\">\n  <p>" + (escapeHTML(json.text)) + "</p>\n  &mdash; " + (escapeHTML(json.user.name)) + " (@" + (escapeHTML(json.user.screen_name)) + ") \n  <a href=\"https://twitter.com/" + (escapeHTML(json.user.screen_name)) + "/status/" + json.id_str + "\" data-datetime=\"" + (escapeHTML(json.created_at)) + "\">" + (escapeHTML(json.created_at)) + "</a>\n</blockquote>";
+  html = "<blockquote class=\"twitter-tweet\">\n  <p>" + (escapeHTML(json.text)) + "</p>\n  &mdash; " + (escapeHTML(json.user.name)) + " (@" + (escapeHTML(json.user.screen_name)) + ") \n  <a href=\"https://twitter.com/" + (escapeHTML(json.user.screen_name)) + "/status/" + json.id_str + "\" data-datetime=\"" + (escapeHTML(json.created_at)) + "\">" + (escapeHTML(json.created_at)) + "</a>\n</blockquote>";
+};
+
+fetchTweet = function(tweetId, divId, callback) {
+  return jsonp("status", {
+    TWEET_ID: tweetId
+  }, function(json) {
+    callback(divId, renderTweet(json));
+    lib.twttr.loadWidgets();
+  });
 };
 
 embedTweet = function(text, phase, meta) {
-  var div, html, id, matches, r, regexp, tweetId, url;
+  var html, id, matches, r, regexp, tweetId;
   regexp = /\[tweet (?:https?:\/\/twitter.com\/[^\/]+\/status\/)?([0-9]+)\](?!\()/g;
   while (matches = regexp.exec(text)) {
     tweetId = matches[1];
     id = Math.random() * 100000000;
     id = "twitter_oembed_" + id;
-    div = document.createElement('div');
-    div.innerHTML = "Loading";
-    url = "https://api.twitter.com/1/statuses/show/" + tweetId + ".json?callback=?";
-    (function(id) {
-      var _this = this;
-      return jsonp(url, function(json) {
-        var _ref;
-        if ((_ref = document.getElementById(id)) != null) {
-          _ref.innerHTML = renderTweet(json);
-        }
-        if (typeof twttr !== "undefined" && twttr !== null) {
-          twttr.widgets.load();
-        }
-        delay(0, function() {
-          return formatter.scrollBottom();
-        });
-      });
-    })(id);
     html = "<div id='" + id + "'>Loading tweet " + (escapeHTML(tweetId)) + "...</div>";
     r = formatter.placeholder(html);
+    fetchTweet(tweetId, id, formatter.pending());
     text = text.substr(0, matches.index) + r + text.substr(matches.index + matches[0].length);
     regexp.lastIndex = matches.index + r.length;
   }

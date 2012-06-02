@@ -2,7 +2,10 @@
 {
   "name": "Embed Tweet",
   "version": "0.0.6",
-  "access": ["formatter","jsonp"],
+  "access": ["plugin","formatter","jsonp"],
+  "jsonp_urls": {
+    "status":"https://api.twitter.com/1/statuses/show/{INT:TWEET_ID}.json?callback=?"
+  },
   "dependencies": [
     "//platform.twitter.com/widgets.js"
   ]
@@ -22,6 +25,13 @@ renderTweet = (json) ->
       <a href="https://twitter.com/#{escapeHTML json.user.screen_name}/status/#{json.id_str}" data-datetime="#{escapeHTML json.created_at}">#{escapeHTML json.created_at}</a>
     </blockquote>
     """
+  return
+
+fetchTweet = (tweetId, divId, callback) =>
+  jsonp "status", {TWEET_ID:tweetId}, (json) =>
+    callback divId, renderTweet json
+    lib.twttr.loadWidgets()
+    return
 
 embedTweet = (text, phase, meta) =>
   regexp = /\[tweet (?:https?:\/\/twitter.com\/[^\/]+\/status\/)?([0-9]+)\](?!\()/g
@@ -29,18 +39,11 @@ embedTweet = (text, phase, meta) =>
     tweetId = matches[1]
     id = (Math.random() * 100000000)
     id = "twitter_oembed_#{id}"
-    div = document.createElement 'div'
-    div.innerHTML = "Loading"
-    url = "https://api.twitter.com/1/statuses/show/#{tweetId}.json?callback=?"
-    do (id) ->
-      jsonp url, (json) =>
-        document.getElementById(id)?.innerHTML = renderTweet json
-        twttr?.widgets.load()
-        delay 0, ->
-          formatter.scrollBottom()
-        return
     html = "<div id='#{id}'>Loading tweet #{escapeHTML tweetId}...</div>"
     r = formatter.placeholder html
+
+    fetchTweet tweetId, id, formatter.pending()
+
     text = text.substr(0, matches.index) + r + text.substr(matches.index + matches[0].length)
     regexp.lastIndex = matches.index + r.length
   return text

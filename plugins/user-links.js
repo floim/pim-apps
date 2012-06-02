@@ -2,7 +2,7 @@
 /*!PIM_PLUGIN
 { "name"    : "User Links"
 , "version" : "0.0.5"
-, "access"  : ["formatter","userCollection"]
+, "access"  : ["plugin","formatter","userCollection"]
 }
 */
 
@@ -37,13 +37,12 @@ atUserLinks = function(text, phase, meta) {
     users = userCollection.where({
       username: username
     });
-    if (users.length === 0) {
-      continue;
+    if (users.length > 0) {
+      userId = users[0].id;
+      r = formatter.placeholder("<a href='/user/" + userId + "' class='username_" + userId + "'>@" + (escapeHTML(username)) + "</a>");
+      text = text.substr(0, matches.index) + r + text.substr(matches.index + matches[0].length);
+      regexp.lastIndex = matches.index + r.length;
     }
-    userId = users[0].id;
-    r = formatter.placeholder("<a href='/user/" + userId + "' class='username_" + userId + "'>@" + (escapeHTML(username)) + "</a>");
-    text = text.substr(0, matches.index) + r + text.substr(matches.index + matches[0].length);
-    regexp.lastIndex = matches.index + r.length;
   }
   return text;
 };
