@@ -29,9 +29,12 @@ renderTweet = (json) ->
 
 fetchTweet = (tweetId, divId, promise) =>
   jsonp "status", {TWEET_ID:tweetId}, (json) =>
-    promise.fulfil renderTweet json
-    delay 1, ->
-      twttr.loadWidgets()
+    if !json?
+      promise.fail "Failed to fetch tweet."
+    else
+      promise.fulfil renderTweet json
+      delay 1, ->
+        twttr.loadWidgets()
     return
 
 embedTweet = (text, phase, meta) =>

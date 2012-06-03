@@ -32,10 +32,14 @@ fetchTweet = function(tweetId, divId, promise) {
   return jsonp("status", {
     TWEET_ID: tweetId
   }, function(json) {
-    promise.fulfil(renderTweet(json));
-    delay(1, function() {
-      return twttr.loadWidgets();
-    });
+    if (!(json != null)) {
+      promise.fail("Failed to fetch tweet.");
+    } else {
+      promise.fulfil(renderTweet(json));
+      delay(1, function() {
+        return twttr.loadWidgets();
+      });
+    }
   });
 };
 
