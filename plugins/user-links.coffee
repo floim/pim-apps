@@ -1,6 +1,6 @@
 ###!PIM_PLUGIN
 { "name"    : "User Links"
-, "version" : "0.0.5"
+, "version" : "0.0.6"
 , "access"  : ["plugin","formatter","userCollection"]
 }
 ###

@@ -1,8 +1,8 @@
 ###!PIM_PLUGIN
 {
   "name": "Embed Tweet",
-  "version": "0.0.6",
-  "access": ["plugin","formatter","jsonp"],
+  "version": "0.0.13",
+  "access": ["plugin","formatter","jsonp","twttr"],
   "jsonp_urls": {
     "status":"https://api.twitter.com/1/statuses/show/{INT:TWEET_ID}.json?callback=?"
   },
@@ -25,12 +25,13 @@ renderTweet = (json) ->
       <a href="https://twitter.com/#{escapeHTML json.user.screen_name}/status/#{json.id_str}" data-datetime="#{escapeHTML json.created_at}">#{escapeHTML json.created_at}</a>
     </blockquote>
     """
-  return
+  return html
 
-fetchTweet = (tweetId, divId, callback) =>
+fetchTweet = (tweetId, divId, promise) =>
   jsonp "status", {TWEET_ID:tweetId}, (json) =>
-    callback divId, renderTweet json
-    lib.twttr.loadWidgets()
+    promise.fulfil renderTweet json
+    delay 1, ->
+      twttr.loadWidgets()
     return
 
 embedTweet = (text, phase, meta) =>
@@ -39,13 +40,12 @@ embedTweet = (text, phase, meta) =>
     tweetId = matches[1]
     id = (Math.random() * 100000000)
     id = "twitter_oembed_#{id}"
-    html = "<div id='#{id}'>Loading tweet #{escapeHTML tweetId}...</div>"
-    r = formatter.placeholder html
+    {placeholder,promise} = formatter.promise('div',"Loading tweet #{tweetId}...")
 
-    fetchTweet tweetId, id, formatter.pending()
+    fetchTweet tweetId, id, promise
 
-    text = text.substr(0, matches.index) + r + text.substr(matches.index + matches[0].length)
-    regexp.lastIndex = matches.index + r.length
+    text = text.substr(0, matches.index) + placeholder + text.substr(matches.index + matches[0].length)
+    regexp.lastIndex = matches.index + placeholder.length
   return text
 
 plugin.load = ->

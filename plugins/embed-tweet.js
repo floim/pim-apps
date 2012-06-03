@@ -2,8 +2,8 @@
 /*!PIM_PLUGIN
 {
   "name": "Embed Tweet",
-  "version": "0.0.6",
-  "access": ["plugin","formatter","jsonp"],
+  "version": "0.0.13",
+  "access": ["plugin","formatter","jsonp","twttr"],
   "jsonp_urls": {
     "status":"https://api.twitter.com/1/statuses/show/{INT:TWEET_ID}.json?callback=?"
   },
@@ -25,29 +25,31 @@ escapeHTML = formatter.escapeHTML;
 renderTweet = function(json) {
   var html;
   html = "<blockquote class=\"twitter-tweet\">\n  <p>" + (escapeHTML(json.text)) + "</p>\n  &mdash; " + (escapeHTML(json.user.name)) + " (@" + (escapeHTML(json.user.screen_name)) + ") \n  <a href=\"https://twitter.com/" + (escapeHTML(json.user.screen_name)) + "/status/" + json.id_str + "\" data-datetime=\"" + (escapeHTML(json.created_at)) + "\">" + (escapeHTML(json.created_at)) + "</a>\n</blockquote>";
+  return html;
 };
 
-fetchTweet = function(tweetId, divId, callback) {
+fetchTweet = function(tweetId, divId, promise) {
   return jsonp("status", {
     TWEET_ID: tweetId
   }, function(json) {
-    callback(divId, renderTweet(json));
-    lib.twttr.loadWidgets();
+    promise.fulfil(renderTweet(json));
+    delay(1, function() {
+      return twttr.loadWidgets();
+    });
   });
 };
 
 embedTweet = function(text, phase, meta) {
-  var html, id, matches, r, regexp, tweetId;
+  var id, matches, placeholder, promise, regexp, tweetId, _ref;
   regexp = /\[tweet (?:https?:\/\/twitter.com\/[^\/]+\/status\/)?([0-9]+)\](?!\()/g;
   while (matches = regexp.exec(text)) {
     tweetId = matches[1];
     id = Math.random() * 100000000;
     id = "twitter_oembed_" + id;
-    html = "<div id='" + id + "'>Loading tweet " + (escapeHTML(tweetId)) + "...</div>";
-    r = formatter.placeholder(html);
-    fetchTweet(tweetId, id, formatter.pending());
-    text = text.substr(0, matches.index) + r + text.substr(matches.index + matches[0].length);
-    regexp.lastIndex = matches.index + r.length;
+    _ref = formatter.promise('div', "Loading tweet " + tweetId + "..."), placeholder = _ref.placeholder, promise = _ref.promise;
+    fetchTweet(tweetId, id, promise);
+    text = text.substr(0, matches.index) + placeholder + text.substr(matches.index + matches[0].length);
+    regexp.lastIndex = matches.index + placeholder.length;
   }
   return text;
 };
