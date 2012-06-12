@@ -1,6 +1,6 @@
 ###!PIM_APP{
   "name":       "Message History"
-, "version":    "0.1.0"
+, "version":    "0.1.1"
 , "access":     ["app","chatCollection","contentView","appView"]
 }###
 
@@ -26,24 +26,32 @@ app.render = (args) ->
     message = chat.messageCollection.get args?.messageId
     messages = chat.messageCollection.find {originalId:args?.messageId}
     messages.sort (a,b) -> a.id - b.id
+    msgBlock = dom.tag('div')
+    msgBlock.class "msgBlock"
+    msgBlockAvatar = dom.avatar(message.get('authorId'))
+    msgBlockAvatar.class "msgBlockAvatar #{msgBlockAvatar.getClass()}"
+    msgBlock.append msgBlockAvatar
+    msgBlockAuthor = dom.username(message.get('authorId'),'div')
+    msgBlockAuthor.class "msgBlockAuthor #{msgBlockAuthor.getClass()}"
+    msgBlock.append msgBlockAuthor
+    msgBlockMessages = dom.tag('div')
+    msgBlockMessages.class "msgBlockMessages"
     if message
       handled = true
       #editId = message.get('editId')
-      renderMessage dom, message
+      renderMessage msgBlockMessages, message
     for message in messages
       handled = true
-      renderMessage dom, message
+      renderMessage msgBlockMessages, message
+    msgBlock.append msgBlockMessages
+    dom.append msgBlock
   if !handled
-    dom.append(dom.text("Benjie woz 'ere (#{topic})"))
+    dom.append(dom.text("Click the date of an edited message to view it's history."))
 
 app.load = ->
-  console.log "HELLO!"
-  contentView.on 'click', '.msgContainer', '&.edited .msgDate', (data={}) ->
+  handle = (data={}) ->
     console.log "YAY2! #{data.messageId}"
     app.render {chatId:data.chatId, messageId:data.messageId}
     app.open()
-  appView.delegate 'click .message .edited .msgDate', ->
-    console.log "YAY!"
-
-app.unload = ->
-  console.log "GOODBYE!"
+  contentView.on 'click', '.msgContainer', '&.edited .msgDate', handle
+  appView.on 'click', '.msgContainer', '&.edited .msgDate', handle
