@@ -1,8 +1,8 @@
-###!PIM_PLUGIN
+###!PIM_APP
 {
   "name": "Embed Tweet",
-  "version": "0.0.13",
-  "access": ["plugin","formatter","jsonp","twttr"],
+  "version": "0.1.3",
+  "access": ["app","formatter","jsonp","twttr"],
   "jsonp_urls": {
     "status":"https://api.twitter.com/1/statuses/show/{INT:TWEET_ID}.json?callback=?"
   },
@@ -10,6 +10,9 @@
     "//platform.twitter.com/widgets.js"
   ]
 }
+---
+This app allows you to embed tweets into chats using twitter's widget API.
+To embed a tweet, simply type `[tweet #]` where `#` is the id of the tweet, or the URL to that individual tweet.
 ###
 delay = (ms, cb) -> setTimeout cb, ms
 
@@ -33,28 +36,27 @@ fetchTweet = (tweetId, divId, promise) =>
       promise.fail "Failed to fetch tweet."
     else
       promise.fulfil renderTweet json
-      delay 1, ->
+      delay 0, ->
         twttr.loadWidgets()
+        delay 0, ->
+          formatter.scrollBottom()
     return
+  return
 
 embedTweet = (text, phase, meta) =>
-  regexp = /\[tweet (?:https?:\/\/twitter.com\/[^\/]+\/status\/)?([0-9]+)\](?!\()/g
-  while matches = regexp.exec text
+  return formatter.replaceMatches text, /\[tweet (?:https?:\/\/twitter.com\/[^\/]+\/status\/)?([0-9]+)\](?!\()/g, (matches) ->
     tweetId = matches[1]
     id = (Math.random() * 100000000)
     id = "twitter_oembed_#{id}"
     {placeholder,promise} = formatter.promise('div',"Loading tweet #{tweetId}...")
 
     fetchTweet tweetId, id, promise
+    return placeholder
 
-    text = text.substr(0, matches.index) + placeholder + text.substr(matches.index + matches[0].length)
-    regexp.lastIndex = matches.index + placeholder.length
-  return text
-
-plugin.load = ->
-  formatter.add formatter.PHASE_PLAIN, 80, embedTweet
+app.render = ->
+  dom.pimFormat "To embed a tweet, simply type `[tweet #]` where `#` is the id of the tweet, or the URL to that individual tweet."
   return
 
-plugin.unload = ->
-  formatter.remove formatter.PHASE_PLAIN, 80, embedTweet
+app.load = ->
+  formatter.add formatter.PHASE_PLAIN, 80, embedTweet
   return

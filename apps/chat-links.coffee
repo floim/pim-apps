@@ -1,8 +1,13 @@
-###!PIM_PLUGIN
-{ "name"    : "Chat Links"
-, "version" : "0.0.5"
-, "access"  : ["plugin","formatter","chatCollection"]
+###!PIM_APP{
+  "name"    : "Chat Links"
+, "version" : "0.1.1"
+, "access"  : ["app","formatter","chatCollection"]
 }
+-------------
+This app allows you to embed links to other chats in your messages. To
+link to a chat, simply type `[chat #]` where `#` is the id of the chat.
+This will render as the name of the chat as a hyperlink - on clicking
+you will visit that chat.
 ###
 escapeHTML = formatter.escapeHTML
 
@@ -20,10 +25,9 @@ chatLinks = (text, phase, meta) =>
     matches.nextIndex = matches.index + r.length
   return text
 
-plugin.load = ->
-  formatter.add formatter.PHASE_PLAIN, 80, chatLinks
-  return
+app.render = ->
+  dom.pimFormat "To link to a chat, simply type `[chat #]` where `#` is the id of the chat."
 
-plugin.unload = ->
-  formatter.remove formatter.PHASE_PLAIN, 80, chatLinks
+app.load = ->
+  formatter.add formatter.PHASE_PLAIN, 80, chatLinks
   return
